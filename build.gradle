@@ -1,0 +1,208 @@
+plugins {
+    id 'java'
+    id 'eclipse'
+    id 'idea'
+    id 'war'
+    id 'com.bmuschko.docker-remote-api' version '3.2.7'
+    id 'org.sonarqube' version '2.6.2'
+    id 'org.openrepose.gradle.plugins.jaxb' version '2.5.0'
+    id 'nebula.ospackage' version '4.6.0'
+    id 'nebula.rpm' version '4.6.0'
+    id 'nebula.deb' version '4.6.0'
+}
+
+sourceCompatibility = 1.8
+compileJava.options.encoding = 'UTF-8'
+
+
+repositories{
+    jcenter()
+}
+
+webAppDirName = 'src/main/webapp'   // directory for files to include in root of WAR webapp, including META-INF and WEB-INF
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/main/java-gen'   //Add generated sources
+        }
+    }
+}
+
+
+dependencies {
+    implementation 'org.apache.commons:commons-lang3:3.4',  // Apache commons
+            'com.google.guava:guava:23.0',                  // Google guava
+            'javax.servlet:javax.servlet-api:4.0.0',        // Servlet api
+            'org.slf4j:slf4j-api:1.7.25',                   // Logging via SLF4J
+            'org.apache.velocity:velocity-engine-core:2.0', // Velocity Templating engine
+            'org.apache.tika:tika-core:1.17',               // Tika for demo mime type identification
+            'com.github.filosganga:geogson-core:1.1.97',    //-|
+            'com.github.filosganga:geogson-jts:1.1.97'     //--- For DemoServlet to load GeoJson to VectorModel
+
+    runtimeOnly 'ch.qos.logback:logback-core:1.2.3',    //-|
+            'ch.qos.logback:logback-classic:1.2.3'      //--- Preffered logging facade
+
+
+    jaxb 'com.sun.xml.bind:jaxb-xjc:2.2',                 //-|
+            'com.sun.xml.bind:jaxb-impl:2.2',             //-|-- Required for Jaxb Plugin
+            'javax.xml.bind:jaxb-api:2.2'                 //-|
+
+
+    testImplementation 'org.eclipse.jetty:jetty-server:9.1.3+', //-|
+            'org.eclipse.jetty:jetty-webapp:9.1.3+',            //-|-- Jetty Libraries
+            'org.eclipse.jetty:jetty-util:9.1.3+',              //-|
+            'junit:junit:4.11'
+
+    testRuntimeOnly 'ch.qos.logback:logback-core:1.2.3',
+            'ch.qos.logback:logback-classic:1.2.3'
+}
+
+
+//region ---- Task Configurations ----
+clean {
+    delete 'libs'
+    delete 'src/main/java-gen'
+}
+
+//region WAR Configuration
+war {
+    manifest {
+        attributes 'Implementation-Title': project.name,
+                'Implementation-Version': project.version
+    }
+    webXml = file('src/main/war/linux.web.xml')
+}
+
+task("warDocker", type:War) {
+    baseName = project.name
+    manifest {
+        attributes 'Implementation-Title': project.name,
+                'Implementation-Version': project.version
+    }
+    webXml = file('src/main/war/linux.web.xml')
+}
+
+task("warWindows", type: War){
+    classifier = 'linux'
+    manifest {
+        attributes 'Implementation-Title': project.name,
+                'Implementation-Version': project.version
+    }
+    webXml = file('src/main/war/windows.web.xml')
+}
+//endregion
+
+//region RPM Configuration
+def jbossDir = "/opt/jboss/default/standalone/deployments"
+def tomcatDir = "/var/lib/tomcat/webapps"
+ospackage{
+    packageName = 'ServletTemplate'
+    os = LINUX
+    arch = X86_64
+
+    from(file("src/main/config")){
+        into "/opt/nrl/demo/config"
+        user 'nobody'
+        fileMode 0644
+    }
+
+    from(war){
+        into tomcatDir
+        rename ".*.war", "ServletTemplate.war"
+        user 'nobody'
+        fileMode 0644
+    }
+}
+
+//endregion
+
+javadoc {
+    source = sourceSets.main.java.srcDirs[0]
+}
+
+jaxb
+{
+    xsdDir = file("src/main/resources/xjc/schemas")
+    xjc
+    {
+        destinationDir = file("src/main/java-gen")
+        generateEpisodeFiles = false                        //remove if you want episodes.
+    }
+}
+
+
+sonarqube {
+    properties {
+        properties["sonar.language"] = "java"
+    }
+}
+
+//endregion ---- Task Configurations ----
+
+compileJava.dependsOn xjc   // xjc should be run before compile - otherwise it might fail to compile
+assemble.dependsOn war, warWindows, buildRpm, buildDeb  // assemble should depend on all of our production artifact generation tasks
+
+
+artifacts {
+    archives war, warWindows, buildRpm       // declare artifacts for generation and potential upload to Artifactory (if using Jenkins)
+}
+
+//region ///////////////// Docker Config ///////////////////
+def dockerPort = 8098                               // TODO CHANGE THIS to one that's not used already - if you use docker
+def dockerContainer = "$project.name".toLowerCase()   // Docker Container Name
+docker {
+    url = 'http://docker1.nrlssc.navy.mil:4243'
+}
+
+
+task copyDockerWars(type: Copy) {
+    group = "docker"
+    from warDocker
+    into 'build/docker/wars/'
+    rename{String fileName ->
+        fileName.replace("-" + version, "").replace(project.name + "-", "")
+    }
+}
+
+task copyDockerFiles(type: Copy) {
+    group = 'docker'
+    dependsOn copyDockerWars
+
+    into('config'){
+        from 'src/main/config'
+    }
+
+    from 'src/main/dockerfiles'
+    into 'build/docker'
+
+}
+
+task buildDockerImage(type: com.bmuschko.gradle.docker.tasks.image.DockerBuildImage) {
+    dependsOn copyDockerFiles
+    inputDir = project.file("build/docker")
+    tag = "nrlssc/$dockerContainer"
+}
+
+task removeDockerContainer(type: com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer) {
+    force = true
+    targetContainerId { dockerContainer }
+}
+removeDockerContainer.onlyIf {
+    (docker.url + '/containers/' + dockerContainer + "/json").toURL().openConnection().getResponseCode() != 404
+}
+
+
+task createDockerContainer(type: com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer) {
+    dependsOn buildDockerImage, removeDockerContainer
+    targetImageId { buildDockerImage.getImageId() }
+    containerName = dockerContainer
+    portBindings = ["$dockerPort:8080"]
+    //binds = ['/opt/docker_volumes/tileserver/logs':'/var/log', '/stores/vaultnfs/sas':'/stores/vaultnfs/sas']
+}
+
+task startDockerContainer(type: com.bmuschko.gradle.docker.tasks.container.DockerStartContainer) {
+    dependsOn createDockerContainer
+    targetContainerId { createDockerContainer.getContainerId() }
+}
+//endregion

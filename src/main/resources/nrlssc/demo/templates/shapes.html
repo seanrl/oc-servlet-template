@@ -1,0 +1,10 @@
+#set ($title = "Shapes")
+
+#@basic_page()
+
+    #foreach($shape in $shapes)
+        <h1>$shape.Id</h1>
+        <h4>$shape.Geometry</h4>
+    #end
+
+#end

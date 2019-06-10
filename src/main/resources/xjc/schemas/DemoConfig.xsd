@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified"
+           xmlns="http://www.demo.nrlssc/config"
+           targetNamespace="http://www.demo.nrlssc/config">
+
+    <xs:element name="DemoConfig">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="shapesDir" type="xs:string"/>
+                <xs:element name="securityConfig" type="SecurityConfig"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="PathAndPassword">
+        <xs:sequence>
+            <xs:element name="path" type="xs:string"/>
+            <xs:element name="password" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="SecurityConfig">
+        <xs:sequence>
+            <xs:element name="keyStore" type="PathAndPassword" minOccurs="0"/>
+            <xs:element name="trustStore" type="PathAndPassword" minOccurs="0"/>
+            <xs:element name="trustAllSSL" type="xs:boolean"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

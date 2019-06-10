@@ -1,0 +1,44 @@
+.DS_Store
+.casspath
+.project
+Thumbs.db
+npm-debug\.log
+package-lock.json
+.eslintcache
+.hg/
+
+#<Global Ignores on Partial Filename>
+npm-debug\.log.*
+
+#<Global File Extension Ignores>  -  '' roots to the end of the path, helpful for extensions
+.zip
+.dll
+.jnilib
+.log
+.exe
+.app
+.dmg
+.swp
+.iml
+.vcluster
+.cluster
+
+#<Root Folder Ignores>  -  '^' roots to the start of the path (ie root hg dir)
+build/
+bin/
+tools/
+out/
+tmp/
+cache/
+classes/
+.gradle/
+.settings/
+.sonar/
+.idea/
+.metadata/
+
+#<Global Folder Ignores>
+java-gen/
+gensrc/
+build/
+libs/

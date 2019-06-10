@@ -1,0 +1,11 @@
+#set ($title = "Demo")
+
+#@basic_page()
+
+    #foreach($linkName in $links.keySet())
+
+    <a href="$servletRoot/$links[$linkName]">$linkName</a>
+
+    #end
+
+#end

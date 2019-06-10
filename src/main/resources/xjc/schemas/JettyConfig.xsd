@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified"
+           xmlns="http://www.demo.nrlssc/testconfig"
+           targetNamespace="http://www.demo.nrlssc/testconfig"
+           xmlns:dc="http://www.demo.nrlssc/config" >
+
+    <xs:import schemaLocation="DemoConfig.xsd" namespace="http://www.demo.nrlssc/config"/>
+
+    <xs:element name="JettyConfig">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="serverHost" type="xs:string"/>
+                <xs:element name="serverPort" type="xs:int"/>
+                <xs:element name="sslServerPort" type="xs:int" minOccurs="0"/>
+                <xs:element name="securityConfig" type="dc:SecurityConfig" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+
+</xs:schema>

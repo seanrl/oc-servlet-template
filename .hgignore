@@ -1,0 +1,46 @@
+syntax: regexp           #Some patterns are easier to design in the 'glob' syntax, but 'regexp' is considered to be more efficient
+
+#<Global File Ignores>  -  note the (?i) to make it case-insensitive (cross-platform).
+(?i)/*\.DS_Store$
+(?i)/*\.classpath$
+(?i)/*\.project$
+(?i)/*Thumbs.db$
+(?i)/*npm-debug\.log$
+(?i)/*package-lock.json$
+(?i)/*\.eslintcache$
+
+#<Global Ignores on Partial Filename>
+(?i)/*npm-debug\.log.*
+
+#<Global File Extension Ignores>  -  '$' roots to the end of the path, helpful for extensions
+(?i)\.zip$
+(?i)\.dll$
+(?i)\.jnilib$
+(?i)\.log$
+(?i)\.exe$
+(?i)\.app$
+(?i)\.dmg$
+(?i)\.swp$
+(?i)\.iml$
+(?i)\.vcluster$
+(?i)\.cluster$
+
+#<Root Folder Ignores>  -  '^' roots to the start of the path (ie root hg dir)
+^build/
+^bin/
+^tools/
+^out/
+^tmp/
+^cache/
+^classes/
+^\.gradle/
+^\.settings/
+^\.sonar/
+^\.idea/
+^\.metadata/
+
+#<Global Folder Ignores>
+^.*java-gen/
+^.*gensrc/
+^.*build/
+^.*libs/

@@ -1,0 +1,13 @@
+<con:DemoConfig xmlns:con="http://www.demo.nrlssc/config">
+  <con:shapesDir>/var/lib/tomcat/webapps/ServletTemplate/shapes</con:shapesDir>
+  <con:securityConfig>
+    <con:keyStore>
+      <con:path>/opt/nrl/demo/config/security/keystore.jks</con:path>
+      <con:password>changeit</con:password>
+    </con:keyStore>
+    <con:trustStore>
+      <con:path>/opt/nrl/demo/config/security/cacerts.jks</con:path>
+    </con:trustStore>
+    <con:trustAllSSL>false</con:trustAllSSL>
+  </con:securityConfig>
+</con:DemoConfig>
